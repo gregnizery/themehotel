@@ -1,0 +1,9 @@
+{
+  "name": "themehotel-v2-tools",
+  "private": true,
+  "description": "Headless test harness: runs a SWF in Ruffle (Chromium) and takes screenshots",
+  "dependencies": {
+    "@ruffle-rs/ruffle": "*",
+    "playwright-core": "*"
+  }
+}

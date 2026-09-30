@@ -1,0 +1,8 @@
+<!doctype html><html><body style="margin:0;background:#000">
+<div id="c" style="width:700px;height:500px"></div>
+<script>window.RufflePlayer={config:{autoplay:"on",unmuteOverlay:"hidden",splashScreen:false,letterbox:"off",logLevel:"warn"}};</script>
+<script src="/tools/node_modules/@ruffle-rs/ruffle/ruffle.js"></script>
+<script>
+const r=window.RufflePlayer.newest();const p=r.createPlayer();p.style.width="700px";p.style.height="500px";
+document.getElementById('c').appendChild(p);p.load(new URLSearchParams(location.search).get('swf'));window.player=p;
+</script></body></html>
