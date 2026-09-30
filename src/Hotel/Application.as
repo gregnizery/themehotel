@@ -67,7 +67,7 @@ package Hotel
 
       override public function GetAppVersion() : String
       {
-         return "2.0";
+         return "2.1";
       }
    }
 }

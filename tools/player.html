@@ -4,5 +4,5 @@
 <script src="/tools/node_modules/@ruffle-rs/ruffle/ruffle.js"></script>
 <script>
 const r=window.RufflePlayer.newest();const p=r.createPlayer();p.style.width="700px";p.style.height="500px";
-document.getElementById('c').appendChild(p);p.load(new URLSearchParams(location.search).get('swf'));window.player=p;
+document.getElementById('c').appendChild(p);const q=new URLSearchParams(location.search);p.load({url:q.get('swf'),parameters:q.get('vars')||''});window.player=p;
 </script></body></html>

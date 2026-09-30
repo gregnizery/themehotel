@@ -73,6 +73,21 @@ package HotelCommon
 
       private var m_floorDisplayer:FloorDisplayer;
 
+      // ---- V2: random events ----
+      public static const EVENT_GOOD:int = 1;
+
+      public static const EVENT_BAD:int = 2;
+
+      public static const EVENT_NEUTRAL:int = 3;
+
+      private var m_eventLog:Array = [];
+
+      private var m_daysSinceEvent:int = 0;
+
+      private var m_festivalDays:int = 0;
+
+      public var m_eventsEnabled:Boolean = true;
+
       public function HotelGameLogic()
       {
          super();
@@ -310,6 +325,7 @@ package HotelCommon
                this.m_chartData.AddPoint("rooms",new Point(_loc2_.valueOf(),this.m_query.GetTotalGuestRoomsCount()));
             }
             this.DayEnded();
+            this.UpdateRandomEvents();
             var _loc3_:*;
             var _loc4_:* = (_loc3_ = this.m_gameStatus.date).date + 1;
             _loc3_.date = _loc4_;
@@ -406,6 +422,202 @@ package HotelCommon
          {
             this.m_currentMode.Render();
          }
+      }
+
+      // ------------------------------------------------------------------
+      // V2: random events (checked once per game day)
+      // ------------------------------------------------------------------
+
+      public function GetGuestRateBoost() : Number
+      {
+         return this.m_festivalDays > 0 ? 2 : 1;
+      }
+
+      public function GetFestivalDaysLeft() : int
+      {
+         return this.m_festivalDays;
+      }
+
+      public function GetEventLog() : Array
+      {
+         return this.m_eventLog;
+      }
+
+      private function UpdateRandomEvents() : void
+      {
+         if(this.m_festivalDays > 0)
+         {
+            this.m_festivalDays--;
+         }
+         this.m_daysSinceEvent++;
+         if(!this.m_eventsEnabled)
+         {
+            return;
+         }
+         var roomCount:int = this.m_query.GetTotalGuestRoomsCount();
+         if(this.m_gameStatus.day < 30 || roomCount < 4 || this.m_query.GetEntitiesByTemplateName("Reception").length == 0)
+         {
+            return;
+         }
+         // at least 30 days between events, then about 1 chance in 30 per day
+         if(this.m_daysSinceEvent < 30 || Math.random() > 1 / 30)
+         {
+            return;
+         }
+         this.TriggerRandomEvent();
+      }
+
+      // debug (flashvar v2debug=1, key J): force a given event kind
+      public var m_forcedEvent:String = null;
+
+      public function TriggerRandomEvent() : void
+      {
+         this.m_daysSinceEvent = 0;
+         var candidates:Array = ["bus","celebrity","inspector","gift"];
+         if(this.m_festivalDays == 0)
+         {
+            candidates.push("festival");
+         }
+         // breakable spots (facility + machine index) that are still working
+         var spots:Array = [];
+         var bb:BreakableBehaviour = null;
+         for each(bb in this.m_query.GetBreakableRooms())
+         {
+            for(i = 0; i < bb.GetBreakPositions().length; i++)
+            {
+               if(!bb.IsBroken(i))
+               {
+                  spots.push({"b":bb,"i":i});
+               }
+            }
+         }
+         if(spots.length > 0)
+         {
+            candidates.push("power");
+         }
+         candidates.push("storm");
+         var kind:String = candidates[Utils.RandomInt(0,candidates.length - 1)];
+         if(this.m_forcedEvent != null)
+         {
+            kind = this.m_forcedEvent;
+            this.m_forcedEvent = null;
+         }
+         var stars:int = this.m_gameStatus.stars;
+         var rep:Number = this.m_gameStatus.reputation;
+         var amount:int = 0;
+         var i:int = 0;
+         if(kind == "bus")
+         {
+            var free:int = this.m_query.GetTotalGuestRoomsCount() - this.m_query.GetTotalGuestsCount();
+            if(free < 2)
+            {
+               kind = "gift";
+            }
+            else
+            {
+               var count:int = Math.min(free,Utils.RandomInt(4,10));
+               this.m_guestSpawner.AddBusGuests(count);
+               this.AddEvent(EVENT_GOOD,"Tourist bus!","A bus full of tourists stops in front of your hotel: " + count + " new guests are coming.");
+               return;
+            }
+         }
+         if(kind == "celebrity")
+         {
+            if(rep >= 650)
+            {
+               amount = 1500 + 1000 * stars;
+               this.m_gameStatus.money += amount;
+               this.m_gameStatus.reputation = Math.min(1000,rep + 60);
+               this.AddEvent(EVENT_GOOD,"Celebrity visit","A movie star loved your hotel and told everyone about it! +$" + amount + ", reputation boost.");
+            }
+            else
+            {
+               this.m_gameStatus.reputation = Math.max(0,rep - 40);
+               this.AddEvent(EVENT_BAD,"Celebrity visit","A movie star stayed here and complained to the press. Reputation drops. (Needs 650+ to impress)");
+            }
+            return;
+         }
+         if(kind == "inspector")
+         {
+            if(rep >= 700)
+            {
+               amount = 3000 * (stars + 1);
+               this.m_gameStatus.money += amount;
+               this.AddEvent(EVENT_GOOD,"Hotel inspector","The inspector is delighted and awards you a quality prize of $" + amount + ".");
+            }
+            else if(rep < 450)
+            {
+               amount = 1500 * (stars + 1);
+               this.m_gameStatus.money -= amount;
+               this.AddEvent(EVENT_BAD,"Hotel inspector","The inspector found many problems. You are fined $" + amount + ".");
+            }
+            else
+            {
+               this.AddEvent(EVENT_NEUTRAL,"Hotel inspector","The inspector visited your hotel. Everything is acceptable. (700+ reputation earns a prize)");
+            }
+            return;
+         }
+         if(kind == "festival")
+         {
+            this.m_festivalDays = 15;
+            this.AddEvent(EVENT_GOOD,"Festival in town","A big festival starts in town: twice as many guests for 15 days. Build rooms!");
+            return;
+         }
+         if(kind == "power")
+         {
+            if(spots.length == 0)
+            {
+               kind = "gift";
+            }
+            else
+            {
+               var broken:int = Math.min(spots.length,Utils.RandomInt(1,3));
+               for(i = 0; i < broken; i++)
+               {
+                  var spot:Object = spots.splice(Utils.RandomInt(0,spots.length - 1),1)[0];
+                  (spot.b as BreakableBehaviour).AddBreakFactor(spot.i,100000);
+               }
+               this.AddEvent(EVENT_BAD,"Power surge","A power surge broke " + broken + " machine" + (broken > 1 ? "s" : "") + ". Make sure you have engineers!");
+               return;
+            }
+         }
+         if(kind == "storm")
+         {
+            var rooms:Vector.<RoomBehaviour> = this.m_query.GetGuestRooms();
+            for(i = 0; i < rooms.length; i++)
+            {
+               rooms[i].AddCleanness(-60);
+            }
+            this.AddEvent(EVENT_BAD,"Muddy storm","A storm brought mud everywhere: all rooms got dirty. Your maids have work to do!");
+            return;
+         }
+         amount = Utils.RandomInt(5,25) * 100 * (stars + 1);
+         this.m_gameStatus.money += amount;
+         this.AddEvent(EVENT_GOOD,"Generous guest","A happy guest left a big tip for the staff: +$" + amount + ".");
+      }
+
+      private function AddEvent(param1:int, param2:String, param3:String) : void
+      {
+         this.m_eventLog.unshift({
+            "kind":param1,
+            "title":param2,
+            "text":param3,
+            "date":Utils.FormatDate(this.m_gameStatus.date)
+         });
+         if(this.m_eventLog.length > 5)
+         {
+            this.m_eventLog.pop();
+         }
+         if(param1 == EVENT_BAD)
+         {
+            Sounds.PlayWrong();
+         }
+         else
+         {
+            Sounds.PlayStarGot();
+         }
+         Tracker.Message("Event " + param2);
+         this.m_gui.ShowEvent(param1,param2,param3);
       }
 
       public function GetGameStatus() : GameStatus

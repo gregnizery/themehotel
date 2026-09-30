@@ -23,6 +23,45 @@ morts changent.
 | 🔌 | **Jeu 100 % hors-ligne** : suppression du pistage (`track.g-bot.net`) et des liens vers le portail disparu `gamesfree.com` |
 | 🚀 | **Démarrage plus rapide** : l'écran pub du sponsor est sauté |
 | 🏷️ | Menu remis en page : badge « V2 Edition », *Credits* remonté, nouveau bouton *Controls* à la place de *More Games* |
+| 📊 | **Tableau de bord** (V2.1) : touche `T` ou bouton en haut à droite |
+| 🎲 | **Événements aléatoires** (V2.1) : bus de touristes, festival, célébrité, inspecteur, panne de courant, tempête de boue, pourboire |
+
+### Tableau de bord (V2.1)
+
+Panneau semi-transparent, mis à jour en continu :
+
+- taux de remplissage des chambres (clients / chambres) ;
+- réputation et tendance (en hausse / stable / en baisse) ;
+- recettes, dépenses et bénéfice du mois en cours, bénéfice du mois précédent ;
+- personnel, machines en panne, chambres sales ;
+- progression vers la prochaine étoile (argent, chambres, réputation) ;
+- événements actifs (festival en cours) et 3 derniers événements.
+
+![Tableau de bord](docs/tableau-de-bord.png)
+
+### Événements aléatoires (V2.1)
+
+Ils commencent après 30 jours de jeu, si l'hôtel a au moins 4 chambres et une
+réception. Il y a au minimum 30 jours entre deux événements, puis environ une
+chance sur 30 par jour. Chaque événement s'affiche dans une bannière en bas de
+l'écran (clic pour la fermer) et reste dans l'historique du tableau de bord.
+La touche `V` les active ou les désactive.
+
+| Événement | Effet |
+|---|---|
+| 🚌 Bus de touristes | 4 à 10 clients arrivent d'un coup (dans la limite des chambres libres) |
+| 🎪 Festival en ville | 2 fois plus de clients pendant 15 jours |
+| ⭐ Visite d'une célébrité | réputation ≥ 650 : prime + gros bonus de réputation ; sinon : réputation en baisse |
+| 🕵️ Inspecteur hôtelier | réputation ≥ 700 : prix en argent ; < 450 : amende ; sinon rien |
+| ⚡ Panne de courant | 1 à 3 machines tombent en panne (il faut des techniciens) |
+| 🌧️ Tempête de boue | toutes les chambres se salissent (il faut des femmes de chambre) |
+| 💰 Client généreux | pourboire en argent |
+
+Les gains et amendes augmentent avec le nombre d'étoiles. Les bonus/malus de
+réputation sont temporaires : la réputation revient ensuite vers sa valeur
+normale selon la qualité de l'hôtel.
+
+![Événement](docs/evenement.png)
 
 ### Raccourcis clavier (en jeu)
 
@@ -35,6 +74,7 @@ morts changent.
 | `B` | Construire | `M` / `N` | Musique / sons |
 | `R` | Recruter du personnel | `H` / `F1` | Aide |
 | `X` / `Suppr` | Démolir | `Échap` | Outil sélection / fermer l'aide |
+| `T` | Tableau de bord | `V` | Événements aléatoires on/off |
 
 Les raccourcis sont inactifs pendant la saisie d'un texte et lorsqu'une fenêtre
 modale (pause, sauvegarde, confirmation, étoile gagnée…) est ouverte.
@@ -60,8 +100,10 @@ src/                          classes AS3 modifiées (seules celles-ci sont reco
   Hotel/AppStates/StartupState.as    saut de l'écran sponsor
   Hotel/MainMenuWindow.as            nouveau menu (badge V2, bouton Controls)
   HotelCommon/SponsorLink.as         liens sponsor désactivés
-  HotelCommon/HotelGameLogic.as      raccourcis, vitesse x8 en sous-pas
-  HotelCommon/GUI/InGameGui.as       raccourcis, molette, aide, badge x8, autosave en quittant
+  HotelCommon/HotelGameLogic.as      raccourcis, vitesse x8 en sous-pas, événements aléatoires
+  HotelCommon/GuestSpawner.as        arrivées du bus de touristes, bonus festival
+  HotelCommon/GUI/InGameGui.as       raccourcis, molette, aide, badge x8, autosave en quittant,
+                                     tableau de bord, bannière d'événement
 build.sh                      reconstruit dist/theme-hotel-v2.swf
 dist/theme-hotel-v2.swf       résultat
 tools/                        banc de test : lance un SWF dans Ruffle (Chromium headless) et prend des captures
@@ -87,6 +129,13 @@ classes de `src/` dans `original/theme-hotel-v1.swf`.
 ```bash
 cd tools && npm install
 node run-swf.js dist/theme-hotel-v2.swf "$(cat scenario-x8.json)"
+```
+
+Pour tester les événements sans attendre, lancer le SWF avec la variable
+Flash `v2debug=1` : la touche `J` déclenche alors les événements un par un.
+
+```bash
+SWF_VARS="v2debug=1" node run-swf.js dist/theme-hotel-v2.swf "$(cat scenario-events.json)"
 ```
 
 Les captures sont écrites dans `tools/shots/`. Chromium est attendu dans

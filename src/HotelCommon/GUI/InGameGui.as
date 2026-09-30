@@ -44,6 +44,10 @@ package HotelCommon.GUI
    import flash.display.DisplayObjectContainer;
    import flash.display.MovieClip;
    import flash.display.Sprite;
+   import flash.geom.Rectangle;
+   import HotelCommon.BreakableBehaviour;
+   import HotelCommon.RoomBehaviour;
+   import HotelCommon.WorldQuery;
    import flash.events.Event;
    import flash.events.KeyboardEvent;
    import flash.events.MouseEvent;
@@ -106,6 +110,30 @@ package HotelCommon.GUI
       // note: FFDec's compiler mis-compiles a bare "new X(...);" statement,
       // so tooltips are kept in an array instead
       private var m_tooltips:Array = [];
+
+      private var m_dashBtn:Sprite;
+
+      private var m_dash:Sprite;
+
+      private var m_dashText:TextField;
+
+      private var m_dashBg:Sprite;
+
+      private var m_dashHeight:Number = 0;
+
+      private var m_dashTimer:Number = 0;
+
+      private var m_repHistory:Array = [];
+
+      private var m_eventBanner:Sprite;
+
+      private var m_eventTimer:Number = 0;
+
+      private var m_debugEvents:Boolean = false;
+
+      private var m_debugEventIndex:int = 0;
+
+      private static const s_debugEventOrder:Array = ["bus","festival","power","storm","celebrity","inspector","gift"];
 
       public function InGameGui(param1:HotelGameLogic)
       {
@@ -196,6 +224,15 @@ package HotelCommon.GUI
          this.m_tooltips.push(new Tooltip(new tooltip_22_music(),this.m_guiMC.music_off));
          // V2: the sponsor portal is gone, hide its button
          this.m_guiMC.sponsorBtn.visible = false;
+         this.CreateDashboard();
+         try
+         {
+            this.m_debugEvents = m_container.root.loaderInfo.parameters.v2debug == "1";
+         }
+         catch(err:Error)
+         {
+            this.m_debugEvents = false;
+         }
          this.m_speedBadge = CreateLabel("x8",13,16768512);
          this.m_speedBadge.x = this.m_guiMC.time4x.x + this.m_guiMC.time4x.width - 12;
          this.m_speedBadge.y = this.m_guiMC.time4x.y - 16;
@@ -220,7 +257,7 @@ package HotelCommon.GUI
 
       private function OnMouseWheel(param1:MouseEvent) : void
       {
-         if(m_dialog != null || this.m_helpPanel != null)
+         if(m_dialog != null || this.m_helpPanel != null || param1.delta == 0)
          {
             return;
          }
@@ -535,6 +572,26 @@ package HotelCommon.GUI
             this.m_guiMC.stars.alpha = 1;
             this.m_starFlashTimer = 0;
          }
+         if(this.m_eventTimer > 0)
+         {
+            this.m_eventTimer = Utils.AdvanceNumber(this.m_eventTimer,0,param1);
+            this.m_eventBanner.alpha = Math.min(this.m_eventTimer * 2,1);
+            if(this.m_eventTimer <= 0)
+            {
+               this.HideEvent();
+            }
+         }
+         this.m_dashTimer -= param1;
+         if(this.m_dashTimer <= 0)
+         {
+            this.m_dashTimer = 0.5;
+            this.m_repHistory.push(this.m_gameLogic.GetGameStatus().reputation);
+            if(this.m_repHistory.length > 20)
+            {
+               this.m_repHistory.shift();
+            }
+            this.RefreshDashboard();
+         }
          if(this.m_toastTimer > 0)
          {
             this.m_toastTimer = Utils.AdvanceNumber(this.m_toastTimer,0,param1);
@@ -641,6 +698,22 @@ package HotelCommon.GUI
                this.OnSoundToggle(null);
                this.ShowToast(Sounds.IsEnabled() ? "Sounds on" : "Sounds off");
                return true;
+            case 84:
+               this.ToggleDashboard();
+               return true;
+            case 86:
+               this.m_gameLogic.m_eventsEnabled = !this.m_gameLogic.m_eventsEnabled;
+               this.ShowToast(this.m_gameLogic.m_eventsEnabled ? "Random events on" : "Random events off");
+               this.RefreshDashboard();
+               return true;
+            case 74:
+               if(this.m_debugEvents)
+               {
+                  this.m_gameLogic.m_forcedEvent = s_debugEventOrder[this.m_debugEventIndex++ % s_debugEventOrder.length];
+                  this.m_gameLogic.TriggerRandomEvent();
+                  return true;
+               }
+               return false;
             case 75:
                this.OnSaveClick(null);
                return true;
@@ -763,7 +836,9 @@ package HotelCommon.GUI
          AddRow(_loc3_,"K","Save game",360,_loc5_ += _loc6_,62);
          AddRow(_loc3_,"M / N","Music / sounds",360,_loc5_ += _loc6_,62);
          AddRow(_loc3_,"H / F1","This help",360,_loc5_ += _loc6_,62);
-         var _loc7_:TextField = CreateLabel("New in V2: x8 speed, keyboard shortcuts, wheel zoom,\nautosave on quit, offline play (no tracking, no dead links).",12,13434879,"Arial");
+         AddRow(_loc3_,"T","Dashboard",360,_loc5_ += _loc6_,62);
+         AddRow(_loc3_,"V","Random events on/off",360,_loc5_ += _loc6_,62);
+         var _loc7_:TextField = CreateLabel("New in V2: x8 speed, shortcuts, wheel zoom, dashboard, random events\n(bus, festival, celebrity, inspector...), autosave on quit, offline play.",12,13434879,"Arial");
          _loc7_.x = 30;
          _loc7_.y = 282;
          _loc3_.addChild(_loc7_);
@@ -774,8 +849,274 @@ package HotelCommon.GUI
          return _loc2_;
       }
 
+      // ------------------------------------------------------------------
+      // V2: dashboard
+      // ------------------------------------------------------------------
+
+      private function CreateDashboard() : void
+      {
+         var _loc1_:Rectangle = this.m_guiMC.sponsorBtn.getBounds(this.m_guiMC);
+         this.m_dashBtn = new Sprite();
+         var _loc2_:* = this.m_dashBtn.graphics;
+         _loc2_.lineStyle(2,1394032,1);
+         _loc2_.beginFill(4886754,1);
+         _loc2_.drawRoundRect(0,0,40,30,10,10);
+         _loc2_.endFill();
+         _loc2_.lineStyle();
+         _loc2_.beginFill(16768512,1);
+         _loc2_.drawRect(9,17,5,7);
+         _loc2_.drawRect(17,11,5,13);
+         _loc2_.drawRect(25,6,5,18);
+         _loc2_.endFill();
+         this.m_dashBtn.x = int(_loc1_.x + (_loc1_.width - 40) * 0.5);
+         this.m_dashBtn.y = int(_loc1_.y + (_loc1_.height - 30) * 0.5);
+         this.m_dashBtn.buttonMode = true;
+         this.m_dashBtn.addEventListener(MouseEvent.CLICK,this.OnDashClick,false,0,true);
+         this.m_guiMC.addChild(this.m_dashBtn);
+         this.m_dash = new Sprite();
+         this.m_dashBg = new Sprite();
+         this.m_dash.addChild(this.m_dashBg);
+         this.m_dash.x = 458;
+         this.m_dash.y = 38;
+         this.m_dash.filters = [new DropShadowFilter(3,45,0,0.5,6,6)];
+         this.m_dash.mouseChildren = false;
+         this.m_dash.buttonMode = true;
+         this.m_dash.addEventListener(MouseEvent.CLICK,this.OnDashClick,false,0,true);
+         var _loc3_:TextField = CreateLabel("Dashboard",17,16777215);
+         _loc3_.x = 12;
+         _loc3_.y = 6;
+         this.m_dash.addChild(_loc3_);
+         var _loc4_:TextField = CreateLabel("T",12,16768512);
+         _loc4_.x = 214;
+         _loc4_.y = 8;
+         this.m_dash.addChild(_loc4_);
+         this.m_dashText = new TextField();
+         this.m_dashText.embedFonts = true;
+         this.m_dashText.defaultTextFormat = new TextFormat("Arial",11,16777215,null,null,null,null,null,null,null,null,null,2);
+         this.m_dashText.multiline = true;
+         this.m_dashText.wordWrap = true;
+         this.m_dashText.selectable = false;
+         this.m_dashText.mouseEnabled = false;
+         this.m_dashText.width = 216;
+         this.m_dashText.height = 280;
+         this.m_dashText.x = 10;
+         this.m_dashText.y = 32;
+         this.m_dash.addChild(this.m_dashText);
+         this.m_dash.visible = false;
+         m_container.addChild(this.m_dash);
+      }
+
+      private function OnDashClick(param1:Event) : void
+      {
+         this.ToggleDashboard();
+      }
+
+      private function ToggleDashboard() : void
+      {
+         this.m_dash.visible = !this.m_dash.visible;
+         this.RefreshDashboard();
+      }
+
+      private static function SumDict(param1:Object) : Number
+      {
+         var _loc2_:Number = 0;
+         var _loc3_:* = null;
+         if(param1 == null)
+         {
+            return 0;
+         }
+         for(_loc3_ in param1)
+         {
+            _loc2_ += Number(param1[_loc3_]);
+         }
+         return _loc2_;
+      }
+
+      private static function Col(param1:String, param2:String) : String
+      {
+         return "<font color=\"#" + param2 + "\">" + param1 + "</font>";
+      }
+
+      private static function Money(param1:Number) : String
+      {
+         var _loc2_:int = Math.round(param1);
+         return Col((_loc2_ < 0 ? "-$" : "$") + Math.abs(_loc2_),_loc2_ < 0 ? "FF8080" : "9CFF9C");
+      }
+
+      private static function Bar(param1:Number) : String
+      {
+         var _loc2_:int = Math.round(Utils.Clamp(param1,0,1) * 10);
+         var _loc3_:String = "";
+         var _loc4_:int = 0;
+         while(_loc4_ < 10)
+         {
+            _loc3_ += _loc4_ < _loc2_ ? "|" : ".";
+            _loc4_++;
+         }
+         return Col(_loc3_.substr(0,_loc2_),"FFE000") + Col(_loc3_.substr(_loc2_),"6A8FD0");
+      }
+
+      private function RefreshDashboard() : void
+      {
+         var _loc19_:Object = null;
+         if(this.m_dash == null || !this.m_dash.visible)
+         {
+            return;
+         }
+         var _loc1_:GameStatus = this.m_gameLogic.GetGameStatus();
+         var _loc2_:WorldQuery = this.m_gameLogic.GetWorldQuery();
+         var _loc3_:int = _loc2_.GetTotalGuestsCount();
+         var _loc4_:int = _loc2_.GetTotalGuestRoomsCount();
+         var _loc5_:Number = _loc4_ > 0 ? _loc3_ / _loc4_ : 0;
+         var _loc6_:Number = SumDict(_loc1_.curMonthIncomes);
+         var _loc7_:Number = SumDict(_loc1_.curMonthCosts) + _loc1_.curMonthLoanPayment;
+         var _loc8_:String = "-";
+         if(_loc1_.prevMonthIncomes != null)
+         {
+            _loc8_ = Money(SumDict(_loc1_.prevMonthIncomes) - SumDict(_loc1_.prevMonthCosts) - _loc1_.prevMonthLoanPayment);
+         }
+         var _loc9_:Number = _loc1_.reputation - (this.m_repHistory.length > 0 ? this.m_repHistory[0] : _loc1_.reputation);
+         var _loc10_:String = _loc9_ > 1 ? Col(" (rising)","9CFF9C") : (_loc9_ < -1 ? Col(" (falling)","FF8080") : " (stable)");
+         var _loc11_:int = 0;
+         var _loc12_:BreakableBehaviour = null;
+         var _loc13_:int = 0;
+         for each(_loc12_ in _loc2_.GetBreakableRooms())
+         {
+            _loc13_ = 0;
+            while(_loc13_ < _loc12_.GetBreakPositions().length)
+            {
+               if(_loc12_.IsBroken(_loc13_))
+               {
+                  _loc11_++;
+               }
+               _loc13_++;
+            }
+         }
+         var _loc14_:int = 0;
+         var _loc15_:RoomBehaviour = null;
+         for each(_loc15_ in _loc2_.GetGuestRooms())
+         {
+            if(_loc15_.GetCleanness() < 50)
+            {
+               _loc14_++;
+            }
+         }
+         var _loc16_:String = "";
+         _loc16_ += "<b>Occupancy</b>  " + _loc3_ + " / " + _loc4_ + " rooms (" + Math.round(_loc5_ * 100) + "%)<br>" + Bar(_loc5_) + "<br>";
+         _loc16_ += "<b>Reputation</b>  " + int(_loc1_.reputation) + _loc10_ + "<br>";
+         _loc16_ += "<b>This month</b>  in " + Money(_loc6_) + "  out " + Money(-_loc7_) + "<br>";
+         _loc16_ += "   net " + Money(_loc6_ - _loc7_) + "    last month " + _loc8_ + "<br>";
+         _loc16_ += "<b>Staff</b> " + _loc2_.GetTotalStaffCount() + "   <b>Broken</b> " + (_loc11_ > 0 ? Col(String(_loc11_),"FF8080") : "0") + "   <b>Dirty rooms</b> " + (_loc14_ > 0 ? Col(String(_loc14_),"FF8080") : "0") + "<br>";
+         if(_loc1_.stars < 5)
+         {
+            var _loc17_:Object = Config.GetStarProgress(this.m_gameLogic);
+            _loc16_ += "<b>Next star (" + (_loc1_.stars + 1) + ")</b><br>";
+            _loc16_ += " " + Bar(_loc17_.moneyProgress) + " money $" + _loc17_.targetMoney + "<br>";
+            _loc16_ += " " + Bar(_loc17_.roomsProgress) + " rooms " + _loc17_.targetRooms + "<br>";
+            _loc16_ += " " + Bar(_loc17_.reputationProgress) + " reputation " + _loc17_.targetReputation + "<br>";
+         }
+         else
+         {
+            _loc16_ += "<b>5 stars reached!</b><br>";
+         }
+         _loc16_ += "<b>Events</b> " + (this.m_gameLogic.m_eventsEnabled ? "on" : Col("off","FF8080")) + " (V)";
+         if(this.m_gameLogic.GetFestivalDaysLeft() > 0)
+         {
+            _loc16_ += "  " + Col("Festival: " + this.m_gameLogic.GetFestivalDaysLeft() + " days","9CFF9C");
+         }
+         _loc16_ += "<br>";
+         var _loc18_:Array = this.m_gameLogic.GetEventLog();
+         if(_loc18_.length == 0)
+         {
+            _loc16_ += Col("  no event yet","A8C0F0");
+         }
+         for each(_loc19_ in _loc18_.slice(0,3))
+         {
+            _loc16_ += Col(" " + _loc19_.date + "  ","A8C0F0") + Col(_loc19_.title,_loc19_.kind == HotelGameLogic.EVENT_BAD ? "FF8080" : (_loc19_.kind == HotelGameLogic.EVENT_GOOD ? "9CFF9C" : "FFFFFF")) + "<br>";
+         }
+         this.m_dashText.htmlText = _loc16_;
+         var _loc20_:Number = 32 + this.m_dashText.textHeight + 12;
+         if(Math.abs(_loc20_ - this.m_dashHeight) > 1)
+         {
+            this.m_dashHeight = _loc20_;
+            this.m_dashBg.graphics.clear();
+            this.m_dashBg.graphics.lineStyle(2,16777215,0.9);
+            this.m_dashBg.graphics.beginFill(1324474,0.88);
+            this.m_dashBg.graphics.drawRoundRect(0,0,236,_loc20_,18,18);
+            this.m_dashBg.graphics.endFill();
+         }
+      }
+
+      // ------------------------------------------------------------------
+      // V2: random event banner
+      // ------------------------------------------------------------------
+
+      public function ShowEvent(param1:int, param2:String, param3:String) : void
+      {
+         this.HideEvent();
+         var _loc4_:uint = param1 == HotelGameLogic.EVENT_BAD ? 12597547 : (param1 == HotelGameLogic.EVENT_GOOD ? 2917965 : 4886754);
+         this.m_eventBanner = new Sprite();
+         var _loc5_:TextField = CreateLabel(param2,18,16777215);
+         var _loc6_:TextField = new TextField();
+         _loc6_.embedFonts = true;
+         _loc6_.defaultTextFormat = new TextFormat("Arial",12,16777215);
+         _loc6_.multiline = true;
+         _loc6_.wordWrap = true;
+         _loc6_.selectable = false;
+         _loc6_.mouseEnabled = false;
+         _loc6_.width = 380;
+         _loc6_.autoSize = TextFieldAutoSize.LEFT;
+         _loc6_.text = param3;
+         var _loc7_:Number = 38 + _loc6_.height + 10;
+         this.m_eventBanner.graphics.lineStyle(2,16777215,1);
+         this.m_eventBanner.graphics.beginFill(1324474,0.95);
+         this.m_eventBanner.graphics.drawRoundRect(0,0,410,_loc7_,16,16);
+         this.m_eventBanner.graphics.endFill();
+         this.m_eventBanner.graphics.lineStyle();
+         this.m_eventBanner.graphics.beginFill(_loc4_,1);
+         this.m_eventBanner.graphics.drawRoundRect(1,1,408,32,15,15);
+         this.m_eventBanner.graphics.endFill();
+         _loc5_.x = int((410 - _loc5_.width) * 0.5);
+         _loc5_.y = 5;
+         this.m_eventBanner.addChild(_loc5_);
+         _loc6_.x = 15;
+         _loc6_.y = 38;
+         this.m_eventBanner.addChild(_loc6_);
+         // bottom centre: clear of the dashboard and of the tutorial tips
+         this.m_eventBanner.x = 145;
+         this.m_eventBanner.y = int(440 - _loc7_);
+         this.m_eventBanner.filters = [new DropShadowFilter(4,45,0,0.6,8,8)];
+         this.m_eventBanner.buttonMode = true;
+         this.m_eventBanner.mouseChildren = false;
+         this.m_eventBanner.addEventListener(MouseEvent.CLICK,this.OnEventClick,false,0,true);
+         m_container.addChild(this.m_eventBanner);
+         this.m_eventTimer = 8;
+         this.RefreshDashboard();
+      }
+
+      private function OnEventClick(param1:Event) : void
+      {
+         this.HideEvent();
+      }
+
+      private function HideEvent() : void
+      {
+         if(this.m_eventBanner != null)
+         {
+            this.m_eventBanner.parent.removeChild(this.m_eventBanner);
+            this.m_eventBanner = null;
+         }
+         this.m_eventTimer = 0;
+      }
+
       override protected function DestroyControls() : void
       {
+         this.HideEvent();
+         if(this.m_dash != null)
+         {
+            this.m_dash.parent.removeChild(this.m_dash);
+            this.m_dash = null;
+         }
          if(this.m_helpPanel != null)
          {
             this.m_helpPanel.parent.removeChild(this.m_helpPanel);
