@@ -47,7 +47,8 @@ package HotelCommon
          "Restaurant":4,
          "Room_Eco":0,
          "Laundry_XL":1,
-         "Room_Royal":4
+         "Room_Royal":4,
+         "Casino":4
       };
 
       public static const timeOutForMissingServicePenalties:Object = {
@@ -104,6 +105,7 @@ package HotelCommon
       private static const servicePrices:Object = {
          "Laundry":3 * 10,
          "Laundry_XL":3 * 10,
+         "Casino":2000,
          "Cafe":4 * 10,
          "Arcade":9 * 30,
          "Gym":7 * 30,
@@ -140,6 +142,7 @@ package HotelCommon
          "Room_Eco":10,
          "Laundry_XL":120,
          "Room_Royal":700,
+         "Casino":3100,
          "Waiter":300,
          "Cleaner":200,
          "Receptionist":400,
@@ -168,7 +171,8 @@ package HotelCommon
          "Cinema":"State-of-the-art cinema",
          "Room_Eco":"Basic room at a low price. Cheap to build and to keep, but earns less per night",
          "Laundry_XL":"Industrial laundry: 6 washing machines instead of 4, takes 6 cells instead of 4",
-         "Room_Royal":"Golden suite for royalty. Very expensive, but earns twice as much as the Presidential Lux"
+         "Room_Royal":"Golden suite for royalty. Very expensive, but earns twice as much as the Presidential Lux",
+         "Casino":"Red and gold casino with slot machines, roulette, blackjack and a bar. Guests looking for fun play here"
       };
 
       public static var buildCosts:Object = {
@@ -193,7 +197,8 @@ package HotelCommon
          "Cinema":45000,
          "Room_Eco":250,
          "Laundry_XL":3000,
-         "Room_Royal":18000
+         "Room_Royal":18000,
+         "Casino":75000
       };
 
       public static var entityNames:Object = {
@@ -223,7 +228,8 @@ package HotelCommon
          "Cinema":"Cinema",
          "Room_Eco":"Economy Room",
          "Laundry_XL":"Industrial Laundry",
-         "Room_Royal":"Royal Suite"
+         "Room_Royal":"Royal Suite",
+         "Casino":"Casino"
       };
 
       public static const floorHeight:Number = 60;
@@ -260,7 +266,8 @@ package HotelCommon
       public static const templateAliases:Object = {
          "Room_Eco":"Room",
          "Room_Royal":"Room_Lux_Pr",
-         "Laundry_XL":"Laundry"
+         "Laundry_XL":"Laundry",
+         "Casino":"Arcade"
       };
 
       public static const AutoSaveSlot:int = 4;

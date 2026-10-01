@@ -38,6 +38,11 @@ package Hotel
             "<graphic className=\"HotelCommon::LaundryGraphic\"><properties movieClip=\"Laundry\" useBaseScales=\"true\" industrial=\"true\"/></graphic>" +
             "<behaviour className=\"HotelCommon::LaundryBehaviour\"><properties guestFlips=\"0,0,0,0,0,0\" guestPositions=\"122,162,202,242,282,322\" queueRange=\"10 100\"/></behaviour>" +
             "<behaviour className=\"HotelCommon::BreakableBehaviour\"><properties breakPoints=\"145 -33,185 -33,225 -33,265 -33,305 -33,345 -33\"/></behaviour>" +
+         "</template>" +
+         "<template friendlyName=\"Casino\" group=\"Common\" layer=\"100\" name=\"Casino\">" +
+            "<graphic className=\"HotelCommon::BreakableRoomGraphic\"><properties movieClip=\"Arcade\" useBaseScales=\"true\" art=\"casino\"/></graphic>" +
+            "<behaviour className=\"HotelCommon::ArcadeBehaviour\"><properties guestFlips=\"0,0,0,0,0,1,0,1\" guestPositions=\"84,119,154,189,250,302,352,412\" queueRange=\"10 60\"/></behaviour>" +
+            "<behaviour className=\"HotelCommon::BreakableBehaviour\"><properties breakPoints=\"84 -30,119 -30,154 -30,189 -30,240 -36,290 -30,365 -30,400 -30\"/></behaviour>" +
          "</template>";
 
       private var m_stateManager:StateManager;
@@ -84,7 +89,7 @@ package Hotel
 
       override public function GetAppVersion() : String
       {
-         return "2.2";
+         return "2.3";
       }
    }
 }

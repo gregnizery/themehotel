@@ -51,7 +51,8 @@ package HotelCommon.GUI
          "RoofCafe":20,
          "Pool":20,
          "Room_Royal":129,
-         "Laundry_XL":200
+         "Laundry_XL":200,
+         "Casino":200
       };
 
       // V2: buttons for the new buildings, drawn under the original ones
@@ -71,6 +72,12 @@ package HotelCommon.GUI
          "panel":"sub_service",
          "template":"Laundry_XL",
          "label":"Industrial Laundry",
+         "col":0,
+         "cols":1
+      },{
+         "panel":"sub_entertainment",
+         "template":"Casino",
+         "label":"Casino",
          "col":0,
          "cols":1
       }];
@@ -209,8 +216,34 @@ package HotelCommon.GUI
                continue;
             }
             var cols:int = def.cols;
-            var bw:Number = (area.width - (cols - 1) * 4) / cols;
             var bh:Number = 26;
+            // not enough room above the description box: shrink the whole
+            // column of buttons (uniformly, so labels are not squashed)
+            var limit:Number = this.m_gui.text_back.getBounds(panel).top - 3;
+            if(def.col == 0 && area.bottom + 3 + bh > limit)
+            {
+               var k:Number = (limit - area.top) / (area.height + 3 + bh);
+               var cx:Number = area.x + area.width * 0.5;
+               i = 0;
+               while(i < panel.numChildren)
+               {
+                  var c2:DisplayObject = panel.getChildAt(i);
+                  if(c2.height > 60)
+                  {
+                     // panel background
+                     i++;
+                     continue;
+                  }
+                  c2.x = cx + (c2.x - cx) * k;
+                  c2.y = area.top + (c2.y - area.top) * k;
+                  c2.scaleX *= k;
+                  c2.scaleY *= k;
+                  i++;
+               }
+               area = new Rectangle(cx - area.width * k * 0.5,area.top,area.width * k,area.height * k);
+               bh *= k;
+            }
+            var bw:Number = (area.width - (cols - 1) * 4) / cols;
             var allowed:Boolean = StarChecker.IsAllowedToBuild(def.template,this.m_gameLogic);
             var btn:Sprite = new Sprite();
             var mat:Matrix = new Matrix();

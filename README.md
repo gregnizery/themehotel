@@ -46,6 +46,35 @@ morts changent.
   (onglet *Rooms*), ils sont ajoutés à la ligne du bâtiment d'origine.
 - Les sauvegardes contenant ces bâtiments ne s'ouvrent pas dans la V1.
 
+### 🎰 Casino (V2.3)
+
+Salle de 8 cases, rouge et or, entièrement dessinée en code (pas d'image
+ajoutée) : enseigne « CASINO » à ampoules clignotantes, cordon de velours,
+4 machines à sous (rouleaux 7 / cerise / BAR, lumières qui clignotent),
+table de roulette avec roue et bille animées, table de blackjack (cartes,
+jetons, sabot), bar avec bouteilles, lustres dorés. 8 places de jeu, chacune
+peut tomber en panne. Construire → Entertainment, débloqué à **4 étoiles**.
+
+![Casino](docs/casino.png)
+
+**Équilibrage.** Tous les divertissements du jeu d'origine suivent la même
+règle : coût de construction ≈ 37-40 × le prix d'une visite, et entretien
+mensuel ≈ 1,5-1,6 × ce prix.
+
+| Divertissement | Étoiles | Prix / visite | Construction | Entretien / mois | Construction ÷ prix | Entretien ÷ prix |
+|---|---|---|---|---|---|---|
+| Arcade | 1 | $270 | $10 000 | $400 | 37 | 1,48 |
+| Bowling | 2 | $390 | $15 000 | $610 | 38 | 1,56 |
+| Cinéma | 3 | $1 200 | $45 000 | $1 800 | 37,5 | 1,5 |
+| Disco Bar | 4 | $2 130 | $85 000 | $3 400 | 40 | 1,6 |
+| **Casino** | **4** | **$2 000** | **$75 000** | **$3 100** | **37,5** | **1,55** |
+
+Le casino a donc exactement le rendement des autres divertissements, au
+niveau de prix du palier 4 étoiles (un peu sous le Disco Bar, qui reste le
+plus cher). Côté clients, il compte comme une salle d'arcade : les clients
+qui cherchent ce type de distraction choisissent au hasard entre les salles
+d'arcade et les casinos, et paient le prix du casino quand ils y vont.
+
 ![Nouveaux bâtiments](docs/nouveaux-batiments.png)
 
 ### Tableau de bord (V2.1)
@@ -117,7 +146,7 @@ jeu, sauvegarde/chargement).
 ```
 original/theme-hotel-v1.swf   SWF d'origine (non modifié)
 src/                          classes AS3 modifiées (seules celles-ci sont recompilées)
-  Hotel/Application.as               version 2.2, modèles des nouveaux bâtiments
+  Hotel/Application.as               version 2.3, modèles des nouveaux bâtiments
   Hotel/Preloader.as                 suppression du pistage et du logo sponsor
   Hotel/AppStates/StartupState.as    saut de l'écran sponsor
   Hotel/MainMenuWindow.as            nouveau menu (badge V2, bouton Controls)
@@ -128,7 +157,7 @@ src/                          classes AS3 modifiées (seules celles-ci sont reco
   HotelCommon/RoomGraphic.as         teinte des nouvelles chambres
   HotelCommon/PersonGraphic.as       portes des nouvelles chambres
   HotelCommon/LaundryGraphic.as      décor 6 machines de la lingerie industrielle
-  HotelCommon/BreakableRoomGraphic.as point d'accroche pour ce décor
+  HotelCommon/BreakableRoomGraphic.as point d'accroche pour ce décor + dessin du casino
   HotelCommon/GUI/BuildWindow.as     boutons des nouveaux bâtiments
   HotelCommon/GUI/ChartWindow.as     statistiques regroupées par bâtiment d'origine
   HotelCommon/GUI/InGameGui.as       raccourcis, molette, aide, badge x8, autosave en quittant,
