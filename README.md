@@ -52,10 +52,13 @@ Salle de 8 cases, rouge et or, entièrement dessinée en code (pas d'image
 ajoutée) : enseigne « CASINO » à ampoules clignotantes, cordon de velours,
 4 machines à sous (rouleaux 7 / cerise / BAR, lumières qui clignotent),
 table de roulette avec roue et bille animées, table de blackjack (cartes,
-jetons, sabot), bar avec bouteilles, lustres dorés. 8 places de jeu, chacune
+jetons, sabot), bar avec bouteilles, lustres dorés, et deux **croupiers**
+animés : celui de la roulette (visière verte) ramasse les jetons au râteau,
+celui du blackjack distribue les cartes. 8 places de jeu, chacune
 peut tomber en panne. Construire → Entertainment, débloqué à **4 étoiles**.
 
 ![Casino](docs/casino.png)
+![Croupiers](docs/casino-croupiers.png)
 
 **Équilibrage.** Tous les divertissements du jeu d'origine suivent la même
 règle : coût de construction ≈ 37-40 × le prix d'une visite, et entretien

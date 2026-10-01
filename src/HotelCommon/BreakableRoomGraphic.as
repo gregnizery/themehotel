@@ -235,6 +235,9 @@ package HotelCommon
          {
             DrawSlotMachine(g,70 + i * 35,i);
          }
+         // croupiers stand behind the tables (drawn first so the tables hide their legs)
+         DrawCroupier(g,292,0);
+         DrawCroupier(g,383,1);
          // roulette table
          DrawRouletteTable(g);
          // blackjack table
@@ -376,6 +379,114 @@ package HotelCommon
          g.beginFill(0x2A0306,1);
          g.drawRect(x + 1,-6,26,4);
          g.endFill();
+      }
+
+      // croupier in the game's chibi style: big head, white shirt, black vest, red bow tie
+      private static function DrawCroupier(g:*, x:Number, look:int) : void
+      {
+         var skin:uint = look == 0 ? 0xF5C9A0 : 0xC68E62;
+         var hair:uint = look == 0 ? 0x3E2723 : 0x111111;
+         // body (only the part above the table is visible)
+         g.beginFill(0xFAFAFA,1);
+         g.drawRoundRect(x - 6,-36,12,18,6,6);
+         g.endFill();
+         // black vest
+         g.beginFill(0x1C1C1C,1);
+         g.moveTo(x - 6,-33);
+         g.lineTo(x - 2,-33);
+         g.lineTo(x,-26);
+         g.lineTo(x + 2,-33);
+         g.lineTo(x + 6,-33);
+         g.lineTo(x + 6,-18);
+         g.lineTo(x - 6,-18);
+         g.lineTo(x - 6,-33);
+         g.endFill();
+         g.beginFill(GOLD,1);
+         g.drawCircle(x,-24,0.6);
+         g.drawCircle(x,-21,0.6);
+         g.endFill();
+         // red bow tie
+         g.beginFill(0xD50000,1);
+         g.moveTo(x,-34);
+         g.lineTo(x - 2.6,-35.6);
+         g.lineTo(x - 2.6,-32.4);
+         g.lineTo(x,-34);
+         g.lineTo(x + 2.6,-35.6);
+         g.lineTo(x + 2.6,-32.4);
+         g.lineTo(x,-34);
+         g.endFill();
+         // head
+         g.lineStyle(0.6,0x5D4037,1);
+         g.beginFill(skin,1);
+         g.drawCircle(x,-42,6);
+         g.endFill();
+         g.lineStyle();
+         // hair, slicked back
+         g.beginFill(hair,1);
+         g.moveTo(x - 6.2,-42);
+         g.curveTo(x - 6,-49.5,x + 1,-48.6);
+         g.curveTo(x + 6.5,-48,x + 6.2,-42.5);
+         g.curveTo(x + 2,-46,x - 6.2,-42);
+         g.endFill();
+         // eyes and smile
+         g.beginFill(0x212121,1);
+         g.drawCircle(x - 2.2,-41.5,0.8);
+         g.drawCircle(x + 2.2,-41.5,0.8);
+         g.endFill();
+         g.lineStyle(0.6,0x6D4C41,1);
+         g.moveTo(x - 1.6,-38.8);
+         g.curveTo(x,-37.6,x + 1.6,-38.8);
+         g.lineStyle();
+         if(look == 0)
+         {
+            // green dealer visor
+            g.beginFill(0x2E7D32,0.9);
+            g.moveTo(x - 6.5,-45);
+            g.lineTo(x + 6.5,-45);
+            g.lineTo(x + 9,-43);
+            g.lineTo(x - 4,-43.4);
+            g.lineTo(x - 6.5,-45);
+            g.endFill();
+         }
+      }
+
+      // croupier arms, animated: the roulette croupier rakes chips, the dealer deals cards
+      private static function DrawCroupierArms(g:*, x:Number, t:Number, look:int) : void
+      {
+         var skin:uint = look == 0 ? 0xF5C9A0 : 0xC68E62;
+         var swing:Number = Math.sin(t * (look == 0 ? 2.2 : 3.4));
+         var hx:Number = x - 9 + swing * 4;
+         var hy:Number = -24 + Math.abs(swing) * 1.5;
+         g.lineStyle(2.4,0xFAFAFA,1);
+         g.moveTo(x - 5,-31);
+         g.lineTo(hx,hy);
+         g.moveTo(x + 5,-31);
+         g.lineTo(x + 8,-24);
+         g.lineStyle();
+         g.beginFill(skin,1);
+         g.drawCircle(hx,hy,1.4);
+         g.drawCircle(x + 8,-24,1.4);
+         g.endFill();
+         if(look == 0)
+         {
+            // rake
+            g.lineStyle(0.8,0x8D6E63,1);
+            g.moveTo(hx,hy);
+            g.lineTo(hx - 9,hy + 2);
+            g.lineStyle(1.4,0x8D6E63,1);
+            g.moveTo(hx - 9,hy + 0.6);
+            g.lineTo(hx - 9,hy + 3.4);
+            g.lineStyle();
+         }
+         else if(swing > 0.2)
+         {
+            // card being dealt
+            g.beginFill(0xFFFFFF,1);
+            g.lineStyle(0.4,0x999999,1);
+            g.drawRect(hx - 2.5,hy - 1,5,3.5);
+            g.endFill();
+            g.lineStyle();
+         }
       }
 
       private static function DrawRouletteTable(g:*) : void
@@ -537,6 +648,9 @@ package HotelCommon
                g.endFill();
             }
          }
+         // croupier arms over the table edge
+         DrawCroupierArms(g,292,t,0);
+         DrawCroupierArms(g,383,t,1);
          // roulette wheel: 12 alternating segments rotating
          var cx:Number = 240;
          var cy:Number = -26;

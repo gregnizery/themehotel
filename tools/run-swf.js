@@ -4,7 +4,7 @@ const srv=http.createServer((q,s)=>{const f=path.join(root,decodeURIComponent(q.
  fs.readFile(f,(e,d)=>{if(e){s.writeHead(404);s.end();return}
  const t=f.endsWith('.wasm')?'application/wasm':f.endsWith('.js')?'text/javascript':f.endsWith('.html')?'text/html':'application/octet-stream';s.writeHead(200,{'Content-Type':t});s.end(d)})}).listen(8123);
 (async()=>{const b=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/opt/pw-browsers/chromium',args:['--no-sandbox']});
-const pg=await b.newPage({viewport:{width:700,height:500}});
+const pg=await b.newPage({viewport:{width:700,height:500},deviceScaleFactor:Number(process.env.SCALE||1)});
 pg.on('console',m=>{const t=m.text();if(!/wgpu|WebGL|GPU/.test(t))console.log('C:',t.slice(0,300))});
 await pg.goto('http://localhost:8123/tools/player.html?swf=/'+process.argv[2]+'&vars='+encodeURIComponent(process.env.SWF_VARS||''));
 const steps=JSON.parse(process.argv[3]||'[]');let i=0;
