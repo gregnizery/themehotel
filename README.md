@@ -26,6 +26,28 @@ morts changent.
 | 📊 | **Tableau de bord** (V2.1) : touche `T` ou bouton en haut à droite |
 | 🎲 | **Événements aléatoires** (V2.1) : bus de touristes, festival, célébrité, inspecteur, panne de courant, tempête de boue, pourboire |
 
+### Nouveaux bâtiments (V2.2)
+
+| Bâtiment | Où | Débloqué | Coût | Entretien / mois | Prix |
+|---|---|---|---|---|---|
+| 🛏️ **Chambre économique** | Construire → Rooms | dès le départ | $250 | $10 | $4 / nuit (standard : $6) |
+| 👑 **Suite royale** | Construire → Rooms | 4 étoiles | $18 000 | $700 | $180 / nuit (présidentielle : $90) |
+| 🧺 **Lingerie industrielle** | Construire → Service | 1 étoile | $3 000 | $120 | $30 / lavage |
+
+- La **lingerie industrielle** a 6 machines au lieu de 4 et occupe 6 cases au
+  lieu de 4 (1,5× la laverie). Son décor est recomposé à partir de celui de la
+  laverie : 3 rangées de sièges et 6 machines animées, qui peuvent tomber en
+  panne comme les originales.
+- La **chambre économique** reprend le décor de la chambre standard, teinté vert
+  pâle ; la **suite royale** celui de la suite présidentielle, en doré.
+- Pour le jeu, ces bâtiments comptent comme leur modèle : les clients qui
+  veulent une laverie vont à la lingerie industrielle, ceux qui veulent une
+  suite présidentielle acceptent la suite royale, etc. Dans les statistiques
+  (onglet *Rooms*), ils sont ajoutés à la ligne du bâtiment d'origine.
+- Les sauvegardes contenant ces bâtiments ne s'ouvrent pas dans la V1.
+
+![Nouveaux bâtiments](docs/nouveaux-batiments.png)
+
 ### Tableau de bord (V2.1)
 
 Panneau semi-transparent, mis à jour en continu :
@@ -95,13 +117,20 @@ jeu, sauvegarde/chargement).
 ```
 original/theme-hotel-v1.swf   SWF d'origine (non modifié)
 src/                          classes AS3 modifiées (seules celles-ci sont recompilées)
-  Hotel/Application.as               version 2.0
+  Hotel/Application.as               version 2.2, modèles des nouveaux bâtiments
   Hotel/Preloader.as                 suppression du pistage et du logo sponsor
   Hotel/AppStates/StartupState.as    saut de l'écran sponsor
   Hotel/MainMenuWindow.as            nouveau menu (badge V2, bouton Controls)
   HotelCommon/SponsorLink.as         liens sponsor désactivés
   HotelCommon/HotelGameLogic.as      raccourcis, vitesse x8 en sous-pas, événements aléatoires
   HotelCommon/GuestSpawner.as        arrivées du bus de touristes, bonus festival
+  HotelCommon/Config.as              prix, coûts, descriptions des nouveaux bâtiments + alias
+  HotelCommon/RoomGraphic.as         teinte des nouvelles chambres
+  HotelCommon/PersonGraphic.as       portes des nouvelles chambres
+  HotelCommon/LaundryGraphic.as      décor 6 machines de la lingerie industrielle
+  HotelCommon/BreakableRoomGraphic.as point d'accroche pour ce décor
+  HotelCommon/GUI/BuildWindow.as     boutons des nouveaux bâtiments
+  HotelCommon/GUI/ChartWindow.as     statistiques regroupées par bâtiment d'origine
   HotelCommon/GUI/InGameGui.as       raccourcis, molette, aide, badge x8, autosave en quittant,
                                      tableau de bord, bannière d'événement
 build.sh                      reconstruit dist/theme-hotel-v2.swf
@@ -132,7 +161,8 @@ node run-swf.js dist/theme-hotel-v2.swf "$(cat scenario-x8.json)"
 ```
 
 Pour tester les événements sans attendre, lancer le SWF avec la variable
-Flash `v2debug=1` : la touche `J` déclenche alors les événements un par un.
+Flash `v2debug=1` : la touche `J` déclenche alors les événements un par un,
+et `U` ajoute une étoile et $50 000 (pour tester les bâtiments débloqués).
 
 ```bash
 SWF_VARS="v2debug=1" node run-swf.js dist/theme-hotel-v2.swf "$(cat scenario-events.json)"

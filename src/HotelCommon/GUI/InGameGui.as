@@ -706,6 +706,15 @@ package HotelCommon.GUI
                this.ShowToast(this.m_gameLogic.m_eventsEnabled ? "Random events on" : "Random events off");
                this.RefreshDashboard();
                return true;
+            case 85:
+               if(this.m_debugEvents)
+               {
+                  this.m_gameLogic.GetGameStatus().stars = Math.min(5,this.m_gameLogic.GetGameStatus().stars + 1);
+                  this.m_gameLogic.GetGameStatus().money += 50000;
+                  this.ShowToast("Debug: " + this.m_gameLogic.GetGameStatus().stars + " stars");
+                  return true;
+               }
+               return false;
             case 74:
                if(this.m_debugEvents)
                {

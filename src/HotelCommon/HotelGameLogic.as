@@ -1,6 +1,7 @@
 package HotelCommon
 {
    import FGKit.DefaultGameLogic;
+   import FGKit.World.Events.EntityEvent;
    import FGKit.FPSCounter;
    import FGKit.Graphics.ChartData;
    import FGKit.InputManager;
@@ -135,8 +136,62 @@ package HotelCommon
       {
          this.m_query = new WorldQuery(m_world);
          this.m_query.Init();
+         // V2: list the new buildings under their base template too (see Config.templateAliases)
+         var e:Entity = null;
+         for each(e in m_world.GetEntities())
+         {
+            this.AddAlias(e);
+         }
+         m_world.addEventListener("entityAdded",this.OnAliasEntityAdded,false,0,true);
+         m_world.addEventListener("entityRemoved",this.OnAliasEntityRemoved,false,0,true);
          m_world.AddProperty(ObjectProperty.Create("gameLogic",this));
          m_world.addEventListener("income",this.OnIncome,false,0,true);
+      }
+
+      private function AddAlias(param1:Entity) : void
+      {
+         var _loc2_:String = param1.GetTemplate().GetFriendlyName();
+         var _loc3_:String = Config.GetBaseTemplate(_loc2_);
+         if(_loc3_ != _loc2_)
+         {
+            this.m_query.GetEntitiesByTemplateName(_loc3_).push(param1);
+         }
+      }
+
+      private function OnAliasEntityAdded(param1:EntityEvent) : void
+      {
+         this.AddAlias(param1.GetEntity());
+      }
+
+      private function OnAliasEntityRemoved(param1:EntityEvent) : void
+      {
+         var _loc2_:Entity = param1.GetEntity();
+         var _loc3_:String = _loc2_.GetTemplate().GetFriendlyName();
+         var _loc4_:String = Config.GetBaseTemplate(_loc3_);
+         if(_loc4_ != _loc3_)
+         {
+            var _loc5_:Vector.<Entity> = this.m_query.GetEntitiesByTemplateName(_loc4_);
+            var _loc6_:int = _loc5_.indexOf(_loc2_);
+            if(_loc6_ != -1)
+            {
+               _loc5_.splice(_loc6_,1);
+            }
+         }
+      }
+
+      // number of buildings whose own template is param1 (aliases excluded)
+      private function CountOwnTemplate(param1:String) : int
+      {
+         var _loc2_:int = 0;
+         var _loc3_:Entity = null;
+         for each(_loc3_ in this.m_query.GetEntitiesByTemplateName(param1))
+         {
+            if(_loc3_.GetTemplate().GetFriendlyName() == param1)
+            {
+               _loc2_++;
+            }
+         }
+         return _loc2_;
       }
 
       override protected function InitKeyboardInput() : void
@@ -259,7 +314,7 @@ package HotelCommon
             for(_loc2_ in _loc10_)
             {
                _loc7_ = Config.keepCosts[_loc2_];
-               if((_loc8_ = Number(_loc7_) * this.m_query.GetEntitiesByTemplateName(_loc2_).length / _loc1_) > 0)
+               if((_loc8_ = Number(_loc7_) * this.CountOwnTemplate(_loc2_) / _loc1_) > 0)
                {
                   this.m_gameStatus.curMonthCosts[_loc2_] = (this.m_gameStatus.curMonthCosts[_loc2_] || 0) + _loc8_;
                   this.m_gameStatus.money -= _loc8_;
